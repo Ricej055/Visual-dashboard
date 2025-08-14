@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visual Dashboard · Portfolio Piece</title>
+  <meta name="description" content="A single‑file, responsive, animated dashboard using HTML/CSS/JS + Chart.js (CDN)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <style>
+    :root{
+      --bg: #0b0f17; --panel:#111827; --muted:#6b7280; --txt:#e5e7eb; --brand:#60a5fa; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+      --card:#0f172a; --ring: 0 0 0 2px rgba(96,165,250,.35);
+    }
+    :root.light{ --bg:#f8fafc; --panel:#ffffff; --muted:#64748b; --txt:#0f172a; --brand:#2563eb; --ok:#059669; --warn:#d97706; --bad:#dc2626; --card:#f1f5f9; --ring:0 0 0 2px rgba(37,99,235,.25); }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;gap:12px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#a78bfa)}
+    .title{font-weight:800;letter-spacing:.2px}
+    .muted{color:var(--muted)}
+    .actions{display:flex;gap:10px}
+    .btn{appearance:none;border:0;padding:10px 14px;border-radius:12px;background:var(--panel);color:var(--txt);cursor:pointer;transition:.2s transform, .2s box-shadow}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+    .btn[aria-pressed="true"]{outline:var(--ring)}
+
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:18px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+    .panel{background:var(--panel);border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+    .card{background:var(--card);border-radius:14px;padding:14px;position:relative;overflow:hidden;transform-style:preserve-3d;transition:transform .15s ease}
+    .card:focus-within{outline:var(--ring)}
+    .card h3{margin:0 0 6px 0;font-size:13px;font-weight:600;color:var(--muted)}
+    .stat{font-size:26px;font-weight:800;letter-spacing:.3px}
+    .trend{font-size:12px;margin-top:4px}
+    .trend.ok{color:var(--ok)} .trend.bad{color:var(--bad)} .trend.warn{color:var(--warn)}
+
+    .section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+
+    .list{display:flex;flex-direction:column;gap:10px}
+    .row{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;background:var(--card)}
+    .row .label{display:flex;align-items:center;gap:10px}
+    .dot{width:10px;height:10px;border-radius:50%}
+
+    /* Gallery */
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    @media (max-width:700px){.gallery{grid-template-columns:repeat(2,1fr)}}
+    .shot{position:relative;border-radius:14px;overflow:hidden;background:#0b1324;aspect-ratio:16/10}
+    .shot canvas{position:absolute;inset:0;width:100%;height:100%}
+
+    footer{margin-top:26px;color:var(--muted);font-size:13px}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:rgba(125,125,125,.15);padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="title">Visual Dashboard</div>
+          <div class="muted">HTML • CSS • JS • Chart.js</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="themeBtn" class="btn" aria-pressed="false" title="Toggle theme">🌙 Theme</button>
+        <button id="shuffleBtn" class="btn" title="Regenerate demo data">🔁 Shuffle</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="section-head">
+          <h2 style="margin:0">KPI Overview</h2>
+          <span class="muted">Demo data</span>
+        </div>
+        <div class="stats" id="kpi">
+          <!-- cards injected -->
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="section-head"><h3 style="margin:0">Traffic & Conversions</h3><span class="muted">Last 12 weeks</span></div>
+          <canvas id="lineChart" height="120" aria-label="Traffic & Conversions" role="img"></canvas>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="section-head"><h3 style="margin:0">Revenue Split</h3><span class="muted">Channels</span></div>
+          <canvas id="pieChart" height="120" aria-label="Revenue split" role="img"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head"><h3 style="margin:0">Recent Activity</h3></div>
+        <div class="list" id="activity">
+          <!-- list items injected -->
+        </div>
+
+        <div class="section-head" style="margin-top:16px"><h3 style="margin:0">Shots</h3><span class="muted">Canvas doodles</span></div>
+        <div class="gallery" id="shots">
+          <!-- animated tiles -->
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Tip: deploy on GitHub Pages → <span class="kbd">Settings → Pages → Deploy from branch</span>. Put this file at repo root as <span class="kbd">index.html</span>.</p>
+    </footer>
+  </div>
+
+<script>
+// ---- Utilities ----
+const $ = sel => document.querySelector(sel);
+const rnd = (a,b) => Math.round(a + Math.random()*(b-a));
+const fmt = n => n.toLocaleString();
+
+// ---- Theme toggle ----
+(function initTheme(){
+  const key = 'vdark';
+  const apply = v => document.documentElement.classList.toggle('light', !v);
+  const saved = localStorage.getItem(key);
+  const dark = saved ? saved === '1' : true;
+  apply(dark);
+  const btn = $('#themeBtn');
+  btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+  btn.addEventListener('click', () => {
+    const isDark = !document.documentElement.classList.contains('light');
+    apply(!isDark);
+    btn.setAttribute('aria-pressed', (!isDark) ? 'true' : 'false');
+    localStorage.setItem(key, (!isDark) ? '1' : '0');
+  });
+})();
+
+// ---- KPI cards ----
+const kpis = [
+  { label: 'Visitors', key:'visitors', color:'var(--brand)' },
+  { label: 'Signups', key:'signups', color:'var(--ok)' },
+  { label: 'Conversion', key:'conv', color:'var(--warn)', suffix:'%' },
+  { label: 'Churn', key:'churn', color:'var(--bad)', suffix:'%' },
+];
+
+function genKpi(){
+  return {
+    visitors: rnd(12000, 24000),
+    signups: rnd(800, 2200),
+    conv: rnd(3, 11),
+    churn: rnd(1, 4)
+  };
+}
+
+function renderKpi(data){
+  const wrap = $('#kpi');
+  wrap.innerHTML = '';
+  kpis.forEach(k => {
+    const v = data[k.key];
+    const trend = Math.random() > .4 ? 'ok' : (Math.random()>.5 ? 'bad' : 'warn');
+    const delta = (trend==='ok'?'+':'-') + rnd(1,9) + '%';
+    const card = document.createElement('button');
+    card.className = 'card';
+    card.setAttribute('aria-label', `${k.label}: ${v}${k.suffix||''}`);
+    card.innerHTML = `
+      <h3>${k.label}</h3>
+      <div class="stat" style="color:${k.color}">${fmt(v)}${k.suffix||''}</div>
+      <div class="trend ${trend}">${delta} vs last week</div>
+    `;
+    // subtle tilt for delight
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left)/r.width - .5;
+      const y = (e.clientY - r.top)/r.height - .5;
+      card.style.transform = `rotateX(${(-y*4).toFixed(2)}deg) rotateY(${(x*5).toFixed(2)}deg)`;
+    });
+    card.addEventListener('mouseleave', () => card.style.transform = 'rotateX(0) rotateY(0)');
+    wrap.appendChild(card);
+  });
+}
+
+// ---- Charts ----
+let lineChart, pieChart;
+function makeLine(ctx, series){
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: 12}, (_,i)=>`W${i+1}`),
+      datasets: [
+        {label:'Visitors', data: series.map(s=>s.v), tension:.35, borderWidth:2, fill:false},
+        {label:'Signups', data: series.map(s=>s.s), tension:.35, borderWidth:2, fill:false}
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ labels:{ color:getComputedStyle(document.documentElement).getPropertyValue('--txt') } } },
+      scales:{
+        x:{ ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted') } },
+        y:{ ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted') } }
+      }
+    }
+  });
+}
+function makePie(ctx, values){
+  return new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels:['Organic','Ads','Referrals','Affiliates'],
+      datasets:[{ data: values }]
+    },
+    options:{ cutout:'60%', plugins:{ legend:{ position:'bottom', labels:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted') } } } }
+  });
+}
+
+function genSeries(){
+  const s=[]; let v=rnd(12,20)*1000, su=rnd(500,900);
+  for(let i=0;i<12;i++){ v += rnd(-1200,1200); su += rnd(-120,120); s.push({v:Math.max(1000,v), s:Math.max(50,su)}); }
+  return s;
+}
+
+function refreshAll(){
+  const data = genKpi();
+  renderKpi(data);
+  const s = genSeries();
+  const lc = $('#lineChart');
+  const pc = $('#pieChart');
+  if(lineChart) lineChart.destroy();
+  if(pieChart) pieChart.destroy();
+  lineChart = makeLine(lc, s);
+  pieChart = makePie(pc, [rnd(30,55), rnd(10,35), rnd(5,25), rnd(3,15)]);
+}
+
+$('#shuffleBtn').addEventListener('click', refreshAll);
+
+// ---- Activity list ----
+const COLORS = { ok:'var(--ok)', bad:'var(--bad)', warn:'var(--warn)' };
+function renderActivity(){
+  const events = Array.from({length:6}, () => ({
+    kind: ['Deployed','Signup','Error','Payment','Refund'][rnd(0,4)],
+    at: new Date(Date.now()-rnd(1,72)*3600*1000),
+    mood: ['ok','ok','ok','warn','bad'][rnd(0,4)],
+    value: rnd(10,999)
+  }));
+  const host = $('#activity'); host.innerHTML='';
+  for(const e of events){
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `
+      <div class="label"><span class="dot" style="background:${COLORS[e.mood]}"></span>
+      <strong>${e.kind}</strong> <span class="muted">· ${e.at.toLocaleString()}</span></div>
+      <div class="muted">#${e.value}</div>`;
+    host.appendChild(row);
+  }
+}
+
+// ---- Canvas gallery (generative) ----
+function drawShot(canvas){
+  const ctx = canvas.getContext('2d');
+  const {width:w, height:h} = canvas;
+  const g = ctx.createLinearGradient(0,0,w,h);
+  g.addColorStop(0,'#0ea5e9'); g.addColorStop(1,'#a78bfa');
+  ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+  for(let i=0;i<40;i++){
+    ctx.fillStyle = `hsla(${rnd(180,280)},70%,${rnd(45,80)}%,${Math.random()*0.25+0.1})`;
+    const x=rnd(-40,w), y=rnd(-40,h), r=rnd(12,60);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+}
+function makeShots(){
+  const host = $('#shots'); host.innerHTML='';
+  for(let i=0;i<6;i++){
+    const tile = document.createElement('div'); tile.className='shot';
+    const c = document.createElement('canvas'); c.width=600; c.height=380; tile.appendChild(c);
+    host.appendChild(tile); drawShot(c);
+  }
+}
+
+// ---- Init ----
+window.addEventListener('DOMContentLoaded', () => { refreshAll(); renderActivity(); makeShots(); });
+</script>
+</body>
+</html>
